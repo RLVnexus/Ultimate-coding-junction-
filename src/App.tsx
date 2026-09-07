@@ -28,6 +28,7 @@ import { twMerge } from 'tailwind-merge';
 import { SplashScreen } from './components/SplashScreen';
 import { SetupScreen } from './components/SetupScreen';
 import { loadDirectoryFiles, saveFileToLocal, FileSystemMode } from './lib/fileSystem';
+import { cheatsheets } from './lib/cheatsheets';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -60,6 +61,7 @@ export default function App() {
   const [editorTheme, setEditorTheme] = useState<'vs-dark' | 'vs-light' | 'hc-black'>('vs-dark');
   const [bottomPanelMode, setBottomPanelMode] = useState<'none' | 'terminal' | 'notes' | 'youtube'>('none');
   const [notesContent, setNotesContent] = useState('Write your HTML logic or code notes here...');
+  const [activeNoteTab, setActiveNoteTab] = useState<'user' | 'html' | 'css' | 'js' | 'python'>('user');
   const [youtubeUrl, setYoutubeUrl] = useState('https://www.youtube.com/embed/dQw4w9WgXcQ');
 
   const [sidebarVisible, setSidebarVisible] = useState(true);
@@ -987,12 +989,25 @@ export default function App() {
 
             {bottomPanelMode === 'notes' && (
               <div className="flex-1 p-0 flex flex-col relative bg-[#1e1e1e]">
-                <textarea
-                  className="w-full h-full p-4 bg-transparent text-gray-300 border-none outline-none font-mono resize-none"
-                  value={notesContent}
-                  onChange={(e) => setNotesContent(e.target.value)}
-                  placeholder="Take notes here, draft pseudo-code, or document what you learn..."
-                />
+                <div className="flex items-center px-4 py-2 bg-[#252526] border-b border-[#333] gap-2 overflow-x-auto">
+                  <button onClick={() => setActiveNoteTab('user')} className={cn("px-3 py-1 text-xs rounded shrink-0", activeNoteTab === 'user' ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600")}>📝 My Notes</button>
+                  <button onClick={() => setActiveNoteTab('html')} className={cn("px-3 py-1 text-xs rounded shrink-0", activeNoteTab === 'html' ? "bg-orange-600 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600")}>🔥 HTML</button>
+                  <button onClick={() => setActiveNoteTab('css')} className={cn("px-3 py-1 text-xs rounded shrink-0", activeNoteTab === 'css' ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600")}>🎨 CSS</button>
+                  <button onClick={() => setActiveNoteTab('js')} className={cn("px-3 py-1 text-xs rounded shrink-0", activeNoteTab === 'js' ? "bg-yellow-500 text-black" : "bg-gray-700 text-gray-300 hover:bg-gray-600")}>⚡ JavaScript</button>
+                  <button onClick={() => setActiveNoteTab('python')} className={cn("px-3 py-1 text-xs rounded shrink-0", activeNoteTab === 'python' ? "bg-green-600 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600")}>🐍 Python</button>
+                </div>
+                {activeNoteTab === 'user' ? (
+                  <textarea
+                    className="w-full h-full p-4 bg-transparent text-gray-300 border-none outline-none font-mono resize-none"
+                    value={notesContent}
+                    onChange={(e) => setNotesContent(e.target.value)}
+                    placeholder="Take notes here, draft pseudo-code, or document what you learn..."
+                  />
+                ) : (
+                  <div className="flex-1 overflow-y-auto p-4 bg-[#1e1e1e] text-gray-300 font-mono text-sm whitespace-pre-wrap select-text custom-scrollbar">
+                    {cheatsheets[activeNoteTab]}
+                  </div>
+                )}
               </div>
             )}
 
