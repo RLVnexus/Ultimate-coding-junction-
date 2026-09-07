@@ -44,6 +44,25 @@ async function startServer() {
     res.json({ success: true });
   });
 
+  app.get('/api/youtube-search', async (req, res) => {
+    try {
+      const ytSearch = (await import('yt-search')).default;
+      const query = req.query.q as string;
+      if (!query) return res.json([]);
+      const r = await ytSearch(query);
+      const videos = r.videos.slice(0, 15).map((v: any) => ({
+        videoId: v.videoId,
+        title: v.title,
+        thumbnail: v.thumbnail,
+        author: v.author.name,
+        duration: v.timestamp
+      }));
+      res.json(videos);
+    } catch (e: any) {
+      res.status(500).json({error: e.message});
+    }
+  });
+
   app.post('/api/run', async (req, res) => {
     try {
       const { path: filePath, content } = req.body;

@@ -63,6 +63,59 @@ export default function App() {
   const [notesContent, setNotesContent] = useState('Write your HTML logic or code notes here...');
   const [activeNoteTab, setActiveNoteTab] = useState<'user' | 'html' | 'css' | 'js' | 'python'>('user');
   const [youtubeUrl, setYoutubeUrl] = useState('https://www.youtube.com/embed/dQw4w9WgXcQ');
+  const [ytSearchQuery, setYtSearchQuery] = useState('');
+  const [ytSearchResults, setYtSearchResults] = useState<any[]>([]);
+  const [isYtSearching, setIsYtSearching] = useState(false);
+  const [pipVideoUrl, setPipVideoUrl] = useState<string | null>(null);
+  const [pipPosition, setPipPosition] = useState({ x: window.innerWidth - 340, y: window.innerHeight - 240 });
+  const [isDraggingPip, setIsDraggingPip] = useState(false);
+  const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number }>({ startX: 0, startY: 0, initialX: 0, initialY: 0 });
+
+  const handleYtSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ytSearchQuery.trim()) return;
+    setIsYtSearching(true);
+    try {
+      const res = await fetch('/api/youtube-search?q=' + encodeURIComponent(ytSearchQuery));
+      const data = await res.json();
+      setYtSearchResults(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsYtSearching(false);
+    }
+  };
+
+  const handlePipMouseDown = (e: React.MouseEvent) => {
+    setIsDraggingPip(true);
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: pipPosition.x,
+      initialY: pipPosition.y
+    };
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingPip) return;
+      setPipPosition({
+        x: dragRef.current.initialX + (e.clientX - dragRef.current.startX),
+        y: dragRef.current.initialY + (e.clientY - dragRef.current.startY)
+      });
+    };
+    const handleMouseUp = () => {
+      setIsDraggingPip(false);
+    };
+    if (isDraggingPip) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDraggingPip]);
 
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [newFileModal, setNewFileModal] = useState(false);
@@ -1012,35 +1065,51 @@ export default function App() {
             )}
 
             {bottomPanelMode === 'youtube' && (
-              <div className="flex-1 flex flex-col bg-black">
-                <div className="flex items-center px-4 py-2 bg-[#252526] border-b border-[#333]">
-                  <Youtube className="w-4 h-4 text-red-500 mr-2" />
+              <div className="flex-1 flex flex-col bg-black overflow-hidden">
+                <form onSubmit={handleYtSearch} className="flex items-center px-4 py-2 bg-[#252526] border-b border-[#333]">
+                  <Youtube className="w-4 h-4 text-red-500 mr-2 shrink-0" />
                   <input
                     type="text"
                     className="flex-1 bg-[#1e1e1e] border border-[#333] rounded px-3 py-1 text-xs text-white outline-none focus:border-blue-500"
-                    placeholder="Paste YouTube video URL here (e.g. https://youtube.com/watch?v=...)"
-                    value={youtubeUrl}
-                    onChange={(e) => {
-                      let url = e.target.value;
-                      if (url.includes('watch?v=')) {
-                        url = url.replace('watch?v=', 'embed/');
-                        const ampersandIndex = url.indexOf('&');
-                        if (ampersandIndex !== -1) {
-                          url = url.substring(0, ampersandIndex);
-                        }
-                      } else if (url.includes('youtu.be/')) {
-                        url = url.replace('youtu.be/', 'youtube.com/embed/');
-                      }
-                      setYoutubeUrl(url);
-                    }}
+                    placeholder="Search YouTube for classes, tutorials..."
+                    value={ytSearchQuery}
+                    onChange={(e) => setYtSearchQuery(e.target.value)}
                   />
+                  <button type="submit" disabled={isYtSearching} className="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded flex items-center gap-1">
+                    <Search className="w-3 h-3" /> {isYtSearching ? 'Searching...' : 'Search'}
+                  </button>
+                </form>
+                
+                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                  {ytSearchResults.length === 0 && !isYtSearching && (
+                    <div className="text-gray-500 text-sm flex items-center justify-center h-full">
+                      Search for a video to start learning!
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {ytSearchResults.map((video, idx) => (
+                      <div 
+                        key={idx} 
+                        className="bg-[#1e1e1e] border border-[#333] rounded-lg overflow-hidden cursor-pointer hover:border-blue-500 group flex flex-col"
+                        onClick={() => setPipVideoUrl(`https://www.youtube.com/embed/${video.videoId}?autoplay=1`)}
+                      >
+                        <div className="relative aspect-video">
+                          <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
+                          <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] px-1 rounded">
+                            {video.duration}
+                          </div>
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Play className="w-10 h-10 text-white opacity-80" />
+                          </div>
+                        </div>
+                        <div className="p-2 flex-1 flex flex-col">
+                          <h3 className="text-gray-200 text-xs font-semibold line-clamp-2" title={video.title}>{video.title}</h3>
+                          <span className="text-gray-400 text-[10px] mt-1">{video.author}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <iframe
-                  src={youtubeUrl}
-                  className="w-full flex-1 border-none"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
               </div>
             )}
           </div>
@@ -1088,6 +1157,46 @@ export default function App() {
             <span>Cloud Code Editor</span>
           </div>
         </div>
+
+        {/* Floating PiP Video Player */}
+        {pipVideoUrl && (
+          <div 
+            className="fixed z-50 bg-black rounded-lg shadow-2xl border border-gray-700 overflow-hidden flex flex-col"
+            style={{ 
+              width: 320, 
+              height: 240, 
+              left: pipPosition.x, 
+              top: pipPosition.y,
+              cursor: isDraggingPip ? 'grabbing' : 'auto'
+            }}
+          >
+            <div 
+              className="h-6 bg-gray-800 flex items-center justify-between px-2 cursor-grab active:cursor-grabbing select-none shrink-0 group"
+              onMouseDown={handlePipMouseDown}
+            >
+              <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                <Youtube className="w-3 h-3 text-red-500" />
+                <span>PiP Player (Drag)</span>
+              </div>
+              <button 
+                className="text-gray-400 hover:text-white"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPipVideoUrl(null);
+                }}
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+            <iframe
+              src={pipVideoUrl}
+              className="w-full flex-1 border-none pointer-events-auto"
+              style={{ pointerEvents: isDraggingPip ? 'none' : 'auto' }}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
+        )}
 
       </div>
     </div>
