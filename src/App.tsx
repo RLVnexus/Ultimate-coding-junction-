@@ -564,17 +564,32 @@ export default function App() {
       );
     }
 
-    const html = files['index.html'] || '';
-    const css = files['style.css'] || '';
-    const js = files['script.js'] || '';
+    let srcDoc = '';
+    const ext = activeFile?.split('.').pop()?.toLowerCase();
 
-    // Inject CSS and JS into HTML
-    let srcDoc = html;
-    if (css) {
-      srcDoc = srcDoc.replace('</head>', `<style>${css}</style></head>`);
-    }
-    if (js) {
-      srcDoc = srcDoc.replace('</body>', `<script>${js}</script></body>`);
+    if (ext === 'html') {
+      let html = files[activeFile!] || '';
+      const css = files['style.css'] || '';
+      const js = files['script.js'] || '';
+      srcDoc = html;
+      if (css) srcDoc = srcDoc.replace('</head>', `<style>\n${css}\n</style></head>`);
+      if (js) srcDoc = srcDoc.replace('</body>', `<script>\n${js}\n</script></body>`);
+    } else if (ext === 'css' || ext === 'js') {
+      let html = files['index.html'] || '<!DOCTYPE html><html><body><h1>index.html not found</h1></body></html>';
+      const css = files['style.css'] || '';
+      const js = files['script.js'] || '';
+      srcDoc = html;
+      if (css) srcDoc = srcDoc.replace('</head>', `<style>\n${css}\n</style></head>`);
+      if (js) srcDoc = srcDoc.replace('</body>', `<script>\n${js}\n</script></body>`);
+    } else {
+      const content = files[activeFile || ''] || '';
+      const escaped = content
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+      srcDoc = `<!DOCTYPE html><html><body style="font-family: monospace; padding: 20px; color: #d4d4d4; background: #1e1e1e; margin: 0;"><pre style="white-space: pre-wrap; word-wrap: break-word;">${escaped}</pre></body></html>`;
     }
 
     return (
