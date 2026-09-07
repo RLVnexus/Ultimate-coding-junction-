@@ -67,7 +67,10 @@ export default function App() {
   const [ytSearchResults, setYtSearchResults] = useState<any[]>([]);
   const [isYtSearching, setIsYtSearching] = useState(false);
   const [pipVideoUrl, setPipVideoUrl] = useState<string | null>(null);
-  const [pipPosition, setPipPosition] = useState({ x: window.innerWidth - 340, y: window.innerHeight - 240 });
+  const [pipPosition, setPipPosition] = useState({ 
+    x: typeof window !== 'undefined' ? Math.max(20, window.innerWidth - 340) : 20, 
+    y: typeof window !== 'undefined' ? Math.max(20, window.innerHeight - 260) : 20 
+  });
   const [isDraggingPip, setIsDraggingPip] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number }>({ startX: 0, startY: 0, initialX: 0, initialY: 0 });
 
@@ -1091,7 +1094,13 @@ export default function App() {
                       <div 
                         key={idx} 
                         className="bg-[#1e1e1e] border border-[#333] rounded-lg overflow-hidden cursor-pointer hover:border-blue-500 group flex flex-col"
-                        onClick={() => setPipVideoUrl(`https://www.youtube.com/embed/${video.videoId}?autoplay=1`)}
+                        onClick={() => {
+                          setPipVideoUrl(`https://www.youtube.com/embed/${video.videoId}?autoplay=1`);
+                          setPipPosition({
+                            x: Math.max(20, window.innerWidth - 340),
+                            y: Math.max(20, window.innerHeight - 260)
+                          });
+                        }}
                       >
                         <div className="relative aspect-video">
                           <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
