@@ -16,7 +16,12 @@ import {  Folder,
   Layout,
   RefreshCw,
   Save,
-  Laptop
+  Laptop,
+  Moon,
+  Sun,
+  Palette,
+  BookOpen,
+  Youtube
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -52,6 +57,11 @@ export default function App() {
   const [fileSystemMode, setFileSystemMode] = useState<FileSystemMode>('virtual');
   const [dirHandle, setDirHandle] = useState<any>(null);
   
+  const [editorTheme, setEditorTheme] = useState<'vs-dark' | 'vs-light' | 'hc-black'>('vs-dark');
+  const [bottomPanelMode, setBottomPanelMode] = useState<'none' | 'terminal' | 'notes' | 'youtube'>('none');
+  const [notesContent, setNotesContent] = useState('Write your HTML logic or code notes here...');
+  const [youtubeUrl, setYoutubeUrl] = useState('https://www.youtube.com/embed/dQw4w9WgXcQ');
+
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [newFileModal, setNewFileModal] = useState(false);
   const [newFileName, setNewFileName] = useState('');
@@ -218,6 +228,34 @@ export default function App() {
       provideCompletionItems: () => {
         const suggestions = [
           {
+            label: '!',
+            kind: monacoInstance.languages.CompletionItemKind.Snippet,
+            insertText: '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>${1:Document}</title>\n</head>\n<body>\n  ${2}\n</body>\n</html>',
+            insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Emmet Abbreviation: HTML5 Boilerplate Skeleton',
+          },
+          {
+            label: 'html5',
+            kind: monacoInstance.languages.CompletionItemKind.Snippet,
+            insertText: '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>${1:Document}</title>\n</head>\n<body>\n  ${2}\n</body>\n</html>',
+            insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'HTML5 Boilerplate Skeleton',
+          },
+          {
+            label: 'video',
+            kind: monacoInstance.languages.CompletionItemKind.Snippet,
+            insertText: '<video width="${1:100%}" height="${2:auto}" controls autoplay muted loop poster="${3:poster.jpg}">\n  <source src="${4:https://www.w3schools.com/html/mov_bbb.mp4}" type="video/mp4">\n  <source src="${5:https://www.w3schools.com/html/mov_bbb.ogg}" type="video/ogg">\n  Your browser does not support the video tag.\n</video>',
+            insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Real Complete HTML5 Video Player with multiple sources, poster, autoplay, loop, and fallback text.',
+          },
+          {
+            label: 'audio',
+            kind: monacoInstance.languages.CompletionItemKind.Snippet,
+            insertText: '<audio controls>\n  <source src="${1:https://www.w3schools.com/html/horse.mp3}" type="audio/mpeg">\n  Your browser does not support the audio element.\n</audio>',
+            insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Real Complete HTML5 Audio Player',
+          },
+          {
             label: 'h1',
             kind: monacoInstance.languages.CompletionItemKind.Snippet,
             insertText: '<h1>${1}</h1>',
@@ -246,25 +284,11 @@ export default function App() {
             documentation: 'Div container',
           },
           {
-            label: 'video',
-            kind: monacoInstance.languages.CompletionItemKind.Snippet,
-            insertText: '<video width="${1:320}" height="${2:240}" controls>\n  <source src="${3:movie.mp4}" type="video/mp4">\n  Your browser does not support the video tag.\n</video>',
-            insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            documentation: 'HTML5 Video player setup',
-          },
-          {
             label: 'img',
             kind: monacoInstance.languages.CompletionItemKind.Snippet,
             insertText: '<img src="${1:image.jpg}" alt="${2:description}">',
             insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             documentation: 'Image tag',
-          },
-          {
-            label: 'html5',
-            kind: monacoInstance.languages.CompletionItemKind.Snippet,
-            insertText: '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>${1:Document}</title>\n</head>\n<body>\n  ${2}\n</body>\n</html>',
-            insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            documentation: 'HTML5 Boilerplate',
           }
         ];
         return { suggestions };
@@ -841,7 +865,7 @@ export default function App() {
               <Editor
                 height="100%"
                 language={getLanguage(activeFile)}
-                theme="vs-dark"
+                theme={editorTheme}
                 value={files[activeFile] || ''}
                 onChange={handleEditorChange}
                 options={{
@@ -915,31 +939,95 @@ export default function App() {
           </div>
         </div>
 
-        {/* Bottom Panel (Terminal) */}
-        {showTerminal && (
+        {/* Bottom Panel */}
+        {bottomPanelMode !== 'none' && (
           <div className="h-64 bg-[#1e1e1e] border-t border-[#333333] flex flex-col shrink-0">
             <div className="flex border-b border-[#333333] px-4">
-              <button className="px-4 py-2 border-b-2 border-blue-500 text-white text-sm uppercase">Terminal</button>
+              <button 
+                onClick={() => setBottomPanelMode('terminal')}
+                className={cn("px-4 py-2 text-sm uppercase", bottomPanelMode === 'terminal' ? "border-b-2 border-blue-500 text-white" : "text-gray-400 hover:text-white")}
+              >
+                Terminal
+              </button>
+              <button 
+                onClick={() => setBottomPanelMode('notes')}
+                className={cn("px-4 py-2 text-sm uppercase", bottomPanelMode === 'notes' ? "border-b-2 border-blue-500 text-white" : "text-gray-400 hover:text-white")}
+              >
+                Notes & Docs
+              </button>
+              <button 
+                onClick={() => setBottomPanelMode('youtube')}
+                className={cn("px-4 py-2 text-sm uppercase", bottomPanelMode === 'youtube' ? "border-b-2 border-blue-500 text-white" : "text-gray-400 hover:text-white")}
+              >
+                YouTube Classes
+              </button>
               <div className="flex-1" />
-              <button onClick={() => setShowTerminal(false)} className="p-2 hover:bg-gray-800 text-gray-400">
+              <button onClick={() => setBottomPanelMode('none')} className="p-2 hover:bg-gray-800 text-gray-400">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 font-mono text-sm">
-              {terminalOutput.map((line, i) => (
-                <div key={i} className="text-gray-300">{line}</div>
-              ))}
-              <form onSubmit={handleTerminalSubmit} className="flex mt-2">
-                <span className="text-green-400 mr-2">$</span>
-                <input
-                  type="text"
-                  value={terminalInput}
-                  onChange={(e) => setTerminalInput(e.target.value)}
-                  className="flex-1 bg-transparent outline-none text-gray-300 font-mono"
-                  autoFocus
+            
+            {bottomPanelMode === 'terminal' && (
+              <div className="flex-1 overflow-y-auto p-4 font-mono text-sm">
+                {terminalOutput.map((line, i) => (
+                  <div key={i} className="text-gray-300">{line}</div>
+                ))}
+                <form onSubmit={handleTerminalSubmit} className="flex mt-2">
+                  <span className="text-green-400 mr-2">$</span>
+                  <input
+                    type="text"
+                    value={terminalInput}
+                    onChange={(e) => setTerminalInput(e.target.value)}
+                    className="flex-1 bg-transparent outline-none text-gray-300 font-mono"
+                    autoFocus
+                  />
+                </form>
+              </div>
+            )}
+
+            {bottomPanelMode === 'notes' && (
+              <div className="flex-1 p-0 flex flex-col relative bg-[#1e1e1e]">
+                <textarea
+                  className="w-full h-full p-4 bg-transparent text-gray-300 border-none outline-none font-mono resize-none"
+                  value={notesContent}
+                  onChange={(e) => setNotesContent(e.target.value)}
+                  placeholder="Take notes here, draft pseudo-code, or document what you learn..."
                 />
-              </form>
-            </div>
+              </div>
+            )}
+
+            {bottomPanelMode === 'youtube' && (
+              <div className="flex-1 flex flex-col bg-black">
+                <div className="flex items-center px-4 py-2 bg-[#252526] border-b border-[#333]">
+                  <Youtube className="w-4 h-4 text-red-500 mr-2" />
+                  <input
+                    type="text"
+                    className="flex-1 bg-[#1e1e1e] border border-[#333] rounded px-3 py-1 text-xs text-white outline-none focus:border-blue-500"
+                    placeholder="Paste YouTube video URL here (e.g. https://youtube.com/watch?v=...)"
+                    value={youtubeUrl}
+                    onChange={(e) => {
+                      let url = e.target.value;
+                      if (url.includes('watch?v=')) {
+                        url = url.replace('watch?v=', 'embed/');
+                        const ampersandIndex = url.indexOf('&');
+                        if (ampersandIndex !== -1) {
+                          url = url.substring(0, ampersandIndex);
+                        }
+                      } else if (url.includes('youtu.be/')) {
+                        url = url.replace('youtu.be/', 'youtube.com/embed/');
+                      }
+                      setYoutubeUrl(url);
+                    }}
+                  />
+                </div>
+                <iframe
+                  src={youtubeUrl}
+                  className="w-full flex-1 border-none"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              </div>
+            )}
           </div>
         )}
 
@@ -952,10 +1040,31 @@ export default function App() {
             <span className="hover:bg-white/20 px-1 rounded cursor-pointer flex items-center gap-1" onClick={() => fetch('/api/files').then(r => r.json()).then(setFiles).catch(console.warn)}>
                <RefreshCw className="w-3 h-3" /> Sync
             </span>
+            <span 
+              className="hover:bg-white/20 px-1 rounded cursor-pointer flex items-center gap-1"
+              onClick={() => setEditorTheme(editorTheme === 'vs-dark' ? 'vs-light' : editorTheme === 'vs-light' ? 'hc-black' : 'vs-dark')}
+            >
+              <Palette className="w-3 h-3" /> {editorTheme}
+            </span>
           </div>
           <div className="flex-1" />
           <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1 hover:bg-white/20 px-1 rounded cursor-pointer" onClick={() => setShowTerminal(!showTerminal)}>
+            <span 
+              className={cn("flex items-center gap-1 hover:bg-white/20 px-1 rounded cursor-pointer", bottomPanelMode === 'notes' && "bg-white/20")} 
+              onClick={() => setBottomPanelMode(bottomPanelMode === 'notes' ? 'none' : 'notes')}
+            >
+              <BookOpen className="w-3 h-3" /> Notes
+            </span>
+            <span 
+              className={cn("flex items-center gap-1 hover:bg-white/20 px-1 rounded cursor-pointer", bottomPanelMode === 'youtube' && "bg-white/20")} 
+              onClick={() => setBottomPanelMode(bottomPanelMode === 'youtube' ? 'none' : 'youtube')}
+            >
+              <Youtube className="w-3 h-3" /> YouTube
+            </span>
+            <span 
+              className={cn("flex items-center gap-1 hover:bg-white/20 px-1 rounded cursor-pointer", bottomPanelMode === 'terminal' && "bg-white/20")} 
+              onClick={() => setBottomPanelMode(bottomPanelMode === 'terminal' ? 'none' : 'terminal')}
+            >
               <TerminalIcon className="w-3 h-3" /> Terminal
             </span>
             <span className="hover:bg-white/20 px-1 rounded cursor-pointer">
