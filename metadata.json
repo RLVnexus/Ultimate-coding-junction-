@@ -1,0 +1,6 @@
+{
+  "name": "Ultimate Coding Junction",
+  "description": "An advanced cloud-based IDE (Gaya to Patna Express) supporting multiple languages, local workspaces, AI code completion, and a Flutter web sandbox. Made by RLV NEXUS under Love Vaidya.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
